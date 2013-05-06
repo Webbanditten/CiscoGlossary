@@ -1,0 +1,242 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>&copy; Webbanditten 2013</title>
+    <meta name="description" content="">
+    <meta name="author" content="Javier Jiménez Villar (@soyjavi)">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="cleartype" content="on">
+
+    <!-- iPhone -->
+    <link href="http://cdn.tapquo.com/lungo/icon-57.png" sizes="57x57" rel="apple-touch-icon">
+    <link href="http://cdn.tapquo.com/lungo/startup-image-320x460.png" media="(device-width: 320px) and (device-height: 480px)
+             and (-webkit-device-pixel-ratio: 1)" rel="apple-touch-startup-image">
+
+    <!-- iPhone (Retina) -->
+    <link href="http://cdn.tapquo.com/lungo/icon-114.png" sizes="114x114" rel="apple-touch-icon">
+    <link href="http://cdn.tapquo.com/lungo/startup-image-640x920.png" media="(device-width: 320px) and (device-height: 480px)
+             and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image">
+
+    <!-- iPhone 5 -->
+    <link href="http://cdn.tapquo.com/lungo/startup-image-640x1096.png" media="(device-width: 320px) and (device-height: 568px)
+             and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image">
+
+    <!-- iPad -->
+    <link href="http://cdn.tapquo.com/lungo/icon-72.png" sizes="72x72" rel="apple-touch-icon">
+    <link href="http://cdn.tapquo.com/lungo/startup-image-768x1004.png" media="(device-width: 768px) and (device-height: 1024px)
+             and (orientation: portrait)
+             and (-webkit-device-pixel-ratio: 1)" rel="apple-touch-startup-image">
+    <link href="http://cdn.tapquo.com/lungo/startup-image-748x1024.png" media="(device-width: 768px) and (device-height: 1024px)
+             and (orientation: landscape)
+             and (-webkit-device-pixel-ratio: 1)" rel="apple-touch-startup-image">
+
+    <!-- iPad (Retina) -->
+    <link href="http://cdn.tapquo.com/lungo/icon-144.png" sizes="144x144" rel="apple-touch-icon">
+    <link href="http://cdn.tapquo.com/lungo/startup-image-1536x2008.png" media="(device-width: 768px) and (device-height: 1024px)
+             and (orientation: portrait)
+             and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image">
+    <link href="http://cdn.tapquo.com/lungo/startup-image-1496x2048.png" media="(device-width: 768px) and (device-height: 1024px)
+             and (orientation: landscape)
+             and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="components/lungo/lungo.css">
+    <link rel="stylesheet" href="components/lungo/lungo.icon.css">
+    <link rel="stylesheet" href="components/lungo/lungo.icon.brand.css">
+    <link rel="stylesheet" href="components/lungo/lungo.css">
+    <link rel="stylesheet" href="components/lungo/theme.lungo.css">
+    <!-- jQuery -->
+    <script src="components/jquery-1.9.1.min.js"></script>
+    <script>
+	$(document).ready(function(){
+	 
+		//GLOBAL VAR
+		var glossary = "";
+		var XMLSource = "";
+		var keyword = '';
+		var catType = '';
+		var pub = '';
+	 
+		var i = 0;
+	 
+		$("#searchButton").click(function() {
+			keyword = $("input#term").val();
+			catType = $("#category option:selected").val();
+			glossary = $("#glossary option:selected").val();
+			XMLSource = "components/xml/"+glossary+".xml";
+			//Reset any message
+			var errMsg = '';
+			pub = '';
+	 
+			if ( keyword == '' ) { errMsg += 'Please enter a search term' + '\n'; }
+			else if ( catType == 'none' ) { errMsg += 'Please select a category' + '\n'; }
+			else if ( glossary == 'none' ) { errMsg += 'Please select a glossary' + '\n'; }
+			else { searchThis(); }
+	 
+			if ( errMsg != '' ) {
+				pub += '<div class="error">' + '\n';
+				pub += errMsg;
+				pub += '</div>' + '\n';
+			}
+	 
+			//Show error
+			$('#result').html( pub );
+	 
+		});
+	 
+		function searchThis() {
+			$.ajax({
+				type: "GET",
+				beforeSend: Lungo.Notification.show(),
+				url: XMLSource,
+				dataType: "xml",
+				success: function(xml) { loadPublication (xml) }
+			});
+		}
+	 
+		function loadPublication (xmlData) {
+			i = 0;
+			var row;
+	 
+			var searchExp = "";
+	 
+			$(xmlData).find('content-glossary').each(function(){
+	 
+				var term = $(this).find('term').text();
+				var definition = $(this).find('definition').text();
+				var variations = $(this).find('variations').text();
+				var seealso = $(this).find('seealso').text();
+	 
+				//Format the keyword expression
+				var exp = new RegExp(keyword,"gi");
+	 
+				//Check if there is a category selected;
+				//if not, use height column as a default search
+				if ( catType == 'term' ) { searchExp = term.match(exp); }
+				else if ( catType == 'definition' ) { searchExp = definition.match(exp); }
+				else if ( catType == 'variations' ) { searchExp = variations.match(exp); }
+				else if ( catType == 'seealso' ) { searchExp = seealso.match(exp); }
+	 
+				if ( searchExp != null ) {
+	 
+					//Start building the result
+					if ((i % 2) == 0) { row = 'even'; }
+					else { row = 'odd'; }
+	 
+					i++;
+	 				pub += '<li class="theme">' + term + '</li>' + '\n';
+					pub += '<li class="row ' + row + '">' + '\n';
+					if(seealso) {
+						pub += '<div class="right tag blue">' + seealso + '</div>' + '\n';
+					}
+					pub += definition + '\n';
+					pub += '<small>' + variations + '</small>' + '\n';
+					pub += '</li>' + '\n';
+				}
+			});
+	 
+			if ( i == 0 ) {
+				
+				pub += '<ul>' + '\n';
+				pub += '<li class="dark"><strong>No reult</strong></li>' + '\n';
+				pub += '</ul>' + '\n';
+	 
+				//Populate the result
+				$('#result').html( pub );
+				Lungo.Notification.hide();
+			}
+			else {
+				//Pass the result set
+				showResult ( pub );
+				Lungo.Notification.hide();
+			}
+		}
+	 
+		function showResult (resultSet) {
+	 
+			//Show the result
+			pub = '<ul>' + '\n';
+			pub += '<li class="dark"><strong>There are ' + i + ' results!</strong></li>' + '\n';
+			pub += '</ul>' + '\n';
+			pub += '<ul>' + '\n';
+			
+			pub += resultSet;
+	 
+			pub += '</ul>' + '\n';
+	 
+			//Populate
+			$('#result').html(pub);
+			Lungo.Notification.hide();
+	 
+		 //   $('#grid').tablesorter();
+		}
+	});
+	</script>
+</head>
+
+<body class="app">
+    <section id="main" data-transition="">
+        <header>
+            
+           <span class="title centered">Cisco Glossary</span>
+        </header>
+
+        <article id="form-extras" class="active list scroll">
+            <form>
+                <fieldset data-icon="search">
+                    <input type="search" id="term" placeholder="Search..."/>
+                </fieldset>
+            </form>
+            <form>
+                <fieldset>
+                    <label class="select">
+                    <select name="glossary" id="glossary">
+                        <option value="none">Select a glossary</option>
+                        <option value="exploration1">Exploration 1</option>
+                        <option value="exploration2">Exploration 2</option>
+                        <option value="exploration3">Exploration 3</option>
+                        <option value="exploration4">Exploration 4</option>
+                    </select>
+                    </label>
+                </fieldset>
+            </form>
+            <form>
+                <fieldset>
+                    <label class="select">
+                    <select name="category" id="category">
+                        <option value="none">Please Select a Type</option>
+                        <option value="term">Term</option>
+                        <option value="definition">Definition</option>
+                        <option value="variations">Variations</option>
+                        <option value="seealso">Seealso</option>
+                    </select>
+                    </label>
+                </fieldset>
+            </form>
+            <form>
+                <fieldset>
+                    <input style="-webkit-appearance:none;" name="Search" class="button anchor accept" type="button" id="searchButton" value="Search">
+                </fieldset>
+            </form>
+		
+<div id="result">&nbsp;</div>
+        </article>
+    </section>
+
+	
+    <!-- Lungo - Dependencies -->
+    <script src="components/quojs/quo.js"></script>
+    <script src="components/lungo/lungo.js"></script>
+    <!-- Lungo - Sandbox App -->
+    <script>
+        Lungo.init({
+            name: 'Cisco Glossary'
+        });
+    </script>
+</body>
+</html>
