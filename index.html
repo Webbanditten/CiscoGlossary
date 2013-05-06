@@ -131,11 +131,13 @@
 					i++;
 	 				pub += '<li class="theme">' + term + '</li>' + '\n';
 					pub += '<li class="row ' + row + '">' + '\n';
-					if(seealso) {
-						pub += '<div class="right tag blue">' + seealso + '</div>' + '\n';
+					if(variations) {
+						pub += '<div class="right tag blue">' + variations + '</div>' + '\n';
 					}
 					pub += definition + '\n';
-					pub += '<small>' + variations + '</small>' + '\n';
+					if(seealso) {
+						pub += '<small>See also: ' + seealso + '</small>' + '\n';
+					}
 					pub += '</li>' + '\n';
 				}
 			});
